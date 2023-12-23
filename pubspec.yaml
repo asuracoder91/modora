@@ -22,3 +22,24 @@ dev_dependencies:
 
 flutter:
     uses-material-design: true
+
+    assets:
+        - assets/
+
+    fonts:
+        - family: SUITE
+          fonts:
+              - asset: assets/fonts/SUITE-Light.otf
+                weight: 300
+              - asset: assets/fonts/SUITE-Regular.otf
+                weight: 400
+              - asset: assets/fonts/SUITE-Medium.otf
+                weight: 500
+              - asset: assets/fonts/SUITE-SemiBold.otf
+                weight: 600
+              - asset: assets/fonts/SUITE-Bold.otf
+                weight: 700
+              - asset: assets/fonts/SUITE-ExtraBold.otf
+                weight: 800
+              - asset: assets/fonts/SUITE-Heavy.otf
+                weight: 900
