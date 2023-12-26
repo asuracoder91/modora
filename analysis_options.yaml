@@ -3,3 +3,6 @@ include: package:flutter_lints/flutter.yaml
 linter:
     rules:
         require_trailing_commas: true
+anayzer:
+    plugins:
+        - custom_lint
