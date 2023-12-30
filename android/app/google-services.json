@@ -12,7 +12,20 @@
           "package_name": "com.asuracoder.modora"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "723953596318-om1p3o2auevtv5rpshk65hb3modb3gmd.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.asuracoder.modora",
+            "certificate_hash": "bb3e198fb9781bc1ddd08a8f32e797a4cd2e8ca1"
+          }
+        },
+        {
+          "client_id": "723953596318-s32b52r5puodoru97t7aht2df53q4o2r.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCpsFaxD6z2KpTQyAtZZliCUfpCs1S8WGM"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "723953596318-s32b52r5puodoru97t7aht2df53q4o2r.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "723953596318-2a211gv5o8skfjni0hcch7choeahcck1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.asuracoder.modora"
+              }
+            }
+          ]
         }
       }
     }
