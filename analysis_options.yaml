@@ -6,3 +6,5 @@ linter:
 anayzer:
     plugins:
         - custom_lint
+    exclude:
+        - "**/*.g.dart"
