@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:modora/core/core.dart';
 
-class Modora extends StatelessWidget {
+import '../router/router_provider.dart';
+
+class Modora extends ConsumerWidget {
   const Modora({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return const MaterialApp(
+  Widget build(BuildContext context, WidgetRef ref) {
+    final router = ref.watch(routerProvider);
+    return MaterialApp.router(
       title: 'Modora',
       debugShowCheckedModeBanner: false,
-      home: Scaffold(),
+      theme: ModoraTheme.light,
+      routerConfig: router,
     );
   }
 }

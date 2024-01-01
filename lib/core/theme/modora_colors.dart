@@ -9,10 +9,12 @@ abstract class ModoraColors {
   static const Color mainDarkest = Color(0xFF2A1A00);
   static const Color green = Color(0xFFCBE985);
   static const Color greenDark = Color(0xFF6F886D);
+  static const Color greenBold = Color(0xFF344054);
   static const Color greenDarker = Color(0xFF495744);
   static const Color white = Color(0xFFFFF6E5);
   static const Color gray = Color(0xFFDFD1C4);
   static const Color grayDark = Color(0xFFA69A8F);
+  static const Color grayLight = Color(0xFFF2F4F7);
   static const Color cyan = Color(0xFFB7D1C8);
   static const Color cyanBold = Color(0xFF92B5A7);
   static const Color background = Color(0xFFFEEDD8);

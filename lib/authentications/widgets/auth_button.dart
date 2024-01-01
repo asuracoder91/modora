@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../core/core.dart';
+
 class AuthButton extends StatefulWidget {
   const AuthButton({
     super.key,
@@ -22,8 +24,11 @@ class _AuthButtonState extends State<AuthButton> {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: widget.enabled
-            ? Theme.of(context).primaryColor
-            : Theme.of(context).colorScheme.background,
+            ?
+
+            /// 로그인 버튼 색상, 다크 테마 적용시 변경
+            ModoraColors.mainDark
+            : ModoraColors.gray,
       ),
       child: Center(
         child: Text(

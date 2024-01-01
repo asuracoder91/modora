@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:modora/core/core.dart';
 
 class LoginForm extends StatefulWidget {
   const LoginForm({
@@ -7,11 +9,13 @@ class LoginForm extends StatefulWidget {
     required this.obscureText,
     required this.controller,
     required this.onSaved,
+    required this.keyboardType,
   });
   final String text;
   final bool obscureText;
   final TextEditingController controller;
   final FormFieldSetter<String> onSaved;
+  final TextInputType keyboardType;
 
   @override
   State<LoginForm> createState() => _LoginFormState();
@@ -44,7 +48,9 @@ class _LoginFormState extends State<LoginForm> {
       decoration: BoxDecoration(
         border: Border.all(
           color: _isFocused
-              ? Theme.of(context).colorScheme.outline
+
+              /// 로그인 폼 포커스 보더 색상, 다크 테마 적용시 변경
+              ? ModoraColors.greenBold
               : Colors.transparent,
           width: 1,
         ),
@@ -54,8 +60,12 @@ class _LoginFormState extends State<LoginForm> {
         focusNode: _focusNode,
         controller: widget.controller,
         obscureText: widget.obscureText,
+        keyboardType: widget.keyboardType,
         obscuringCharacter: '*',
-        style: const TextStyle(fontWeight: FontWeight.w700),
+        style: TextStyle(
+          fontWeight: FontWeight.w500,
+          fontFamily: GoogleFonts.roboto().fontFamily,
+        ),
         decoration: InputDecoration(
           contentPadding: const EdgeInsets.fromLTRB(
             15,
@@ -64,7 +74,9 @@ class _LoginFormState extends State<LoginForm> {
             10,
           ),
           filled: true,
-          fillColor: Theme.of(context).colorScheme.secondaryContainer,
+
+          /// 로그인 폼 배경색, 다크 테마 적용시 변경
+          fillColor: ModoraColors.grayLight,
           enabledBorder: const UnderlineInputBorder(
             borderSide: BorderSide(
               color: Colors.transparent,
@@ -85,13 +97,15 @@ class _LoginFormState extends State<LoginForm> {
           ),
           labelText: widget.text,
           labelStyle: const TextStyle(
-            color: Color(0xFF667085),
+            /// 로그인 폼 라벨 색상, 다크 테마 적용시 변경
+            color: ModoraColors.greenDarker,
             fontSize: 16,
             letterSpacing: -0.3,
             fontWeight: FontWeight.w500,
           ),
-          floatingLabelStyle: TextStyle(
-            color: Theme.of(context).colorScheme.secondary,
+          floatingLabelStyle: const TextStyle(
+            /// 로그인 폼 라벨 색상, 다크 테마 적용시 변경
+            color: ModoraColors.greenDarker,
             height: 1.3,
             fontSize: 16,
           ),

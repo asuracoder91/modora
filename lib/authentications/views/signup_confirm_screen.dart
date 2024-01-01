@@ -3,38 +3,47 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
-import 'package:modora/core/router/router_names.dart';
 
 import '../../core/constants/gaps.dart';
 import '../../core/constants/reg_expression.dart';
 import '../../core/core.dart';
+import '../../core/router/router_names.dart';
 import '../widgets/auth_button.dart';
 import '../widgets/login_form.dart';
 import '../widgets/social_login.dart';
 import '../widgets/social_login_dark.dart';
 
-class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+class SignUpConfirmScreen extends ConsumerStatefulWidget {
+  const SignUpConfirmScreen({
+    super.key,
+    required this.nickname,
+    required this.email,
+  });
+
+  final String nickname;
+  final String email;
 
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<SignUpConfirmScreen> createState() =>
+      _SignUpConfirmScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _SignUpConfirmScreenState extends ConsumerState<SignUpConfirmScreen> {
   // form 관련 Key와 Controller
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-  final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _passwordCheckController =
+      TextEditingController();
 
   bool _hasValidEmail = false;
   bool _hasValidPassword = false;
   bool _isButtonActive = false;
 
-  // email, password 저장하는 form
+  // Form 값을 저장하는 Map
   Map<String, String> formData = {};
 
-  void _goSignUpScreen(BuildContext context) {
-    context.goNamed(RouteNames.signup);
+  void _goLoginScreen(BuildContext context) {
+    context.goNamed(RouteNames.login);
   }
 
   // 버튼 상태 관리
@@ -46,33 +55,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   @override
   void initState() {
-    _emailController.addListener(() {
+    _passwordController.addListener(() {
+      setState(() {
+        _hasValidPassword = _passwordController.text.isNotEmpty;
+        _updateButtonState();
+      });
+    });
+    _passwordCheckController.addListener(() {
       setState(() {
         _hasValidEmail = emailPattern.hasMatch(_emailController.text);
         _updateButtonState();
       });
     });
-    _passwordController.addListener(() {
-      setState(() {
-        _hasValidPassword = _passwordController.text.length >= 8;
-        _updateButtonState();
-      });
-    });
+
     super.initState();
   }
 
   @override
   void dispose() {
-    _emailController.dispose();
     _passwordController.dispose();
-
+    _passwordCheckController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
-    print("${screenSize.width}, ${screenSize.height}");
     // error message handling provider monitor
     // final errorMessage = ref.watch(errorMessageProvider);
     const errorMessage = null;
@@ -96,11 +104,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         child: Stack(
                           children: [
                             Positioned(
-                              top: 43,
-                              right: 30,
+                              top: 10,
+                              right: 4,
                               child: Image.asset(
-                                "assets/images/login_papyrus.png",
-                                height: screenSize.height > 700 ? 154 : 110,
+                                "assets/images/signup.png",
+                                height: screenSize.height > 700 ? 220 : 160,
                               ),
                             ),
                             Positioned(
@@ -110,14 +118,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    '로그인',
+                                    '회원가입',
                                     style: Theme.of(context)
                                         .textTheme
                                         .headlineLarge,
                                   ),
                                   Gap(screenSize.height * 0.03),
                                   Text(
-                                    '나만의 역사를 기록하기 위해\n로그인 해주세요',
+                                    '회원가입 후 다양한 기기로\n이용할 수 있습니다',
                                     style: Theme.of(context)
                                         .textTheme
                                         .headlineSmall,
@@ -135,19 +143,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           child: Column(
                             children: [
                               LoginForm(
-                                text: "이메일",
-                                controller: _emailController,
-                                obscureText: false,
-                                keyboardType: TextInputType.emailAddress,
+                                text: "패스워드",
+                                controller: _passwordController,
+                                obscureText: true,
+                                keyboardType: TextInputType.visiblePassword,
                                 onSaved: (newValue) {
                                   if (newValue != null) {
-                                    formData['email'] = newValue;
+                                    formData['password'] = newValue;
                                   }
                                 },
                               ),
                               Gaps.v8,
                               LoginForm(
-                                text: "패스워드",
+                                text: "패스워드 확인",
                                 controller: _passwordController,
                                 obscureText: true,
                                 keyboardType: TextInputType.visiblePassword,
@@ -190,7 +198,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         child: GestureDetector(
                           onTap: () {},
                           child: const AuthButton(
-                            text: "로그인",
+                            text: "다음",
                             enabled: true,
                             //_isButtonActive && !ref.watch(loginProvider).isLoading,
                           ),
@@ -201,7 +209,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       GestureDetector(
                         onTap: () {},
                         child: const Text(
-                          "비밀번호를 잊으셨나요?",
+                          "뒤로 돌아가기",
                           style: TextStyle(
                             /// 로그인 폼 비밀번호 찾기 색상, 다크 테마 적용시 변경
                             color: ModoraColors.mainDark,
@@ -252,11 +260,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text('계정이 없으신가요? '),
+                        const Text('이미 계정이 있으시면? '),
                         GestureDetector(
-                          onTap: () => _goSignUpScreen(context),
+                          onTap: () => _goLoginScreen(context),
                           child: const Text(
-                            '회원가입',
+                            '로그인',
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
                               color: ModoraColors.mainDarker,

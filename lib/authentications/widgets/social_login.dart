@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import '../../core/constants/gaps.dart';
 import '../../core/constants/sizes.dart';
@@ -34,7 +35,8 @@ class SocialLogin extends StatelessWidget {
             Gaps.h10,
             Text(
               text,
-              style: const TextStyle(
+              style: TextStyle(
+                fontFamily: GoogleFonts.notoSans().fontFamily,
                 fontSize: Sizes.size16,
                 fontWeight: FontWeight.w500,
               ),
