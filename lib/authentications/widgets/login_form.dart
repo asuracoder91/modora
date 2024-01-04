@@ -69,9 +69,9 @@ class _LoginFormState extends State<LoginForm> {
         decoration: InputDecoration(
           contentPadding: const EdgeInsets.fromLTRB(
             15,
-            10,
+            12,
             15,
-            10,
+            12,
           ),
           filled: true,
 

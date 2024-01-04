@@ -5,10 +5,12 @@ import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/constants/gaps.dart';
-import '../../core/constants/reg_expression.dart';
 import '../../core/core.dart';
 import '../../core/router/router_names.dart';
+import '../models/custom_error.dart';
+import '../view_models/signup_provider.dart';
 import '../widgets/auth_button.dart';
+import '../widgets/error_dialog.dart';
 import '../widgets/login_form.dart';
 import '../widgets/social_login.dart';
 import '../widgets/social_login_dark.dart';
@@ -16,12 +18,7 @@ import '../widgets/social_login_dark.dart';
 class SignUpConfirmScreen extends ConsumerStatefulWidget {
   const SignUpConfirmScreen({
     super.key,
-    required this.nickname,
-    required this.email,
   });
-
-  final String nickname;
-  final String email;
 
   @override
   ConsumerState<SignUpConfirmScreen> createState() =>
@@ -34,9 +31,9 @@ class _SignUpConfirmScreenState extends ConsumerState<SignUpConfirmScreen> {
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _passwordCheckController =
       TextEditingController();
-
-  bool _hasValidEmail = false;
+  String clientErrorMessage = "";
   bool _hasValidPassword = false;
+  bool _hasValidPasswordCheck = false;
   bool _isButtonActive = false;
 
   // Form 값을 저장하는 Map
@@ -49,21 +46,54 @@ class _SignUpConfirmScreenState extends ConsumerState<SignUpConfirmScreen> {
   // 버튼 상태 관리
   void _updateButtonState() {
     setState(() {
-      _isButtonActive = _hasValidPassword && _hasValidEmail;
+      _isButtonActive = _hasValidPassword && _hasValidPasswordCheck;
     });
+  }
+
+  /// 폼 제출
+  void _submit({required String nickname, required String email}) {
+    final form = _formKey.currentState;
+
+    if (form == null || !form.validate()) return;
+
+    ref.read(signupProvider.notifier).signup(
+          nickname: nickname,
+          email: email,
+          password: _passwordController.text.trim(),
+        );
   }
 
   @override
   void initState() {
     _passwordController.addListener(() {
       setState(() {
-        _hasValidPassword = _passwordController.text.isNotEmpty;
+        clientErrorMessage = "";
+        _hasValidPassword = _passwordController.text.length >= 8;
+        if (!_hasValidPassword) {
+          clientErrorMessage = "패스워드를 8글자 이상 입력해주세요";
+        }
+        if (_hasValidPassword ||
+            _passwordController.text.isEmpty ||
+            _passwordController.text == "") {
+          clientErrorMessage = "";
+        }
         _updateButtonState();
       });
     });
     _passwordCheckController.addListener(() {
       setState(() {
-        _hasValidEmail = emailPattern.hasMatch(_emailController.text);
+        clientErrorMessage = "";
+        _hasValidPasswordCheck = _passwordCheckController.text.trim() ==
+            _passwordController.text.trim();
+        if (!_hasValidPasswordCheck) {
+          clientErrorMessage = "패스워드가 일치하지 않습니다";
+        }
+        if (_hasValidPasswordCheck ||
+            _passwordCheckController.text.isEmpty ||
+            _passwordCheckController.text == "") {
+          clientErrorMessage = "";
+        }
+
         _updateButtonState();
       });
     });
@@ -81,9 +111,25 @@ class _SignUpConfirmScreenState extends ConsumerState<SignUpConfirmScreen> {
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
+    final paddingSize = screenSize.width >= 400 ? 30.0 : 25.0;
     // error message handling provider monitor
-    // final errorMessage = ref.watch(errorMessageProvider);
-    const errorMessage = null;
+    final errorMessage = ref.watch(signUpErrorMessageProvider);
+    final formData = ref.watch(formDataProvider);
+    final nickname = formData['nickname'] ?? '';
+    final email = formData['email'] ?? '';
+    ref.listen<AsyncValue<void>>(
+      signupProvider,
+      (previous, next) {
+        next.whenOrNull(
+          error: (e, st) => errorDialog(
+            context,
+            (e as CustomError),
+          ),
+        );
+      },
+    );
+
+    final signupState = ref.watch(signupProvider);
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(), // 화면 터치하면 키보드 내려감
@@ -98,6 +144,10 @@ class _SignUpConfirmScreenState extends ConsumerState<SignUpConfirmScreen> {
                   // 상단 블럭
                   Column(
                     children: [
+                      if (screenSize.height > 860)
+                        const SizedBox(
+                          height: 16,
+                        ),
                       SizedBox(
                         height: screenSize.height > 700 ? 200 : 150,
                         width: 400,
@@ -137,13 +187,13 @@ class _SignUpConfirmScreenState extends ConsumerState<SignUpConfirmScreen> {
                         ),
                       ),
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        padding: EdgeInsets.symmetric(horizontal: paddingSize),
                         child: Form(
                           key: _formKey,
                           child: Column(
                             children: [
                               LoginForm(
-                                text: "패스워드",
+                                text: "패스워드 (8자리 이상)",
                                 controller: _passwordController,
                                 obscureText: true,
                                 keyboardType: TextInputType.visiblePassword,
@@ -156,7 +206,7 @@ class _SignUpConfirmScreenState extends ConsumerState<SignUpConfirmScreen> {
                               Gaps.v8,
                               LoginForm(
                                 text: "패스워드 확인",
-                                controller: _passwordController,
+                                controller: _passwordCheckController,
                                 obscureText: true,
                                 keyboardType: TextInputType.visiblePassword,
                                 onSaved: (newValue) {
@@ -167,16 +217,18 @@ class _SignUpConfirmScreenState extends ConsumerState<SignUpConfirmScreen> {
                               ),
                               Gaps.v6,
                               Visibility(
-                                visible: errorMessage != null &&
-                                    errorMessage.isNotEmpty,
+                                visible: (errorMessage != null &&
+                                        errorMessage.isNotEmpty) ||
+                                    (clientErrorMessage.isNotEmpty &&
+                                        clientErrorMessage != ""),
                                 maintainSize: true,
                                 maintainAnimation: true,
                                 maintainState: true,
-                                child: const SizedBox(
+                                child: SizedBox(
                                   height: 40,
                                   child: Text(
-                                    errorMessage ?? "",
-                                    style: TextStyle(
+                                    errorMessage ?? clientErrorMessage,
+                                    style: const TextStyle(
                                       color:
 
                                           /// 로그인 폼 에러 메시지 색상, 다크 테마 적용시 변경
@@ -194,20 +246,23 @@ class _SignUpConfirmScreenState extends ConsumerState<SignUpConfirmScreen> {
                       ),
                       Gaps.v10,
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        padding: EdgeInsets.symmetric(horizontal: paddingSize),
                         child: GestureDetector(
-                          onTap: () {},
-                          child: const AuthButton(
-                            text: "다음",
-                            enabled: true,
-                            //_isButtonActive && !ref.watch(loginProvider).isLoading,
+                          onTap: () =>
+                              _submit(nickname: nickname, email: email),
+                          child: AuthButton(
+                            text: "회원가입",
+                            enabled: _isButtonActive &&
+                                !ref.watch(signupProvider).isLoading,
                           ),
                         ),
                       ),
                       Gap(screenSize.height * 0.03),
 
                       GestureDetector(
-                        onTap: () {},
+                        onTap: () {
+                          Navigator.of(context).pop();
+                        },
                         child: const Text(
                           "뒤로 돌아가기",
                           style: TextStyle(
@@ -256,11 +311,16 @@ class _SignUpConfirmScreenState extends ConsumerState<SignUpConfirmScreen> {
 
                   //최하단 텍스트 : 회원가입
                   Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    padding: const EdgeInsets.fromLTRB(0, 0, 0, 22.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text('이미 계정이 있으시면? '),
+                        const Text(
+                          '이미 계정이 있으시면? ',
+                          style: TextStyle(
+                            fontSize: 16,
+                          ),
+                        ),
                         GestureDetector(
                           onTap: () => _goLoginScreen(context),
                           child: const Text(
@@ -268,6 +328,7 @@ class _SignUpConfirmScreenState extends ConsumerState<SignUpConfirmScreen> {
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
                               color: ModoraColors.mainDarker,
+                              fontSize: 16,
                             ),
                           ),
                         ),
@@ -277,12 +338,12 @@ class _SignUpConfirmScreenState extends ConsumerState<SignUpConfirmScreen> {
                 ],
               ),
               // 로딩 중이면 로딩 표시
-              // if (ref.watch(loginProvider).isLoading ||
-              //     ref.watch(googleLoginProvider).isLoading) ...[
-              //   const Center(
-              //     child: CircularProgressIndicator.adaptive(),
-              //   ),
-              // ],
+              // || ref.watch(googleLoginProvider).isLoading 추가
+              if (ref.watch(signupProvider).isLoading) ...[
+                const Center(
+                  child: CircularProgressIndicator.adaptive(),
+                ),
+              ],
             ],
           ),
         ),

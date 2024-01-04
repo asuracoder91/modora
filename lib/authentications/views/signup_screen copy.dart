@@ -3,69 +3,96 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
-import 'package:modora/core/router/router_names.dart';
+import 'package:modora/authentications/view_models/signup_provider.dart';
 
 import '../../core/constants/gaps.dart';
 import '../../core/constants/reg_expression.dart';
 import '../../core/core.dart';
+import '../../core/router/router_names.dart';
 import '../widgets/auth_button.dart';
 import '../widgets/login_form.dart';
 import '../widgets/social_login.dart';
 import '../widgets/social_login_dark.dart';
+import 'signup_confirm_screen.dart';
 
-class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+class SignUpScreen extends ConsumerStatefulWidget {
+  const SignUpScreen({super.key});
 
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<SignUpScreen> createState() => _SignUpScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen> {
+class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   // form 관련 Key와 Controller
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final TextEditingController _nickNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
 
   bool _hasValidEmail = false;
-  bool _hasValidPassword = false;
+  bool _hasValidNickName = false;
   bool _isButtonActive = false;
 
-  // email, password 저장하는 form
+  // Form 값을 저장하는 Map
   Map<String, String> formData = {};
 
-  void _goSignUpScreen(BuildContext context) {
-    context.goNamed(RouteNames.signup);
+  void _goLoginScreen(BuildContext context) {
+    context.goNamed(RouteNames.login);
   }
 
-  // 버튼 상태 관리
+  /// TODO: 중복 아이디 체크 기능 구현 필요
+  void _onNextTap() {
+    if (_formKey.currentState != null) {
+      if (_isButtonActive) {
+        _formKey.currentState!.save();
+
+        // Update the provider with the current form data
+        ref.read(formDataProvider.notifier).state = {
+          'nickname': _nickNameController.text,
+          'email': _emailController.text,
+        };
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const SignUpConfirmScreen(),
+          ),
+        );
+      }
+    }
+  }
+
+  /// 버튼 상태 관리
   void _updateButtonState() {
     setState(() {
-      _isButtonActive = _hasValidPassword && _hasValidEmail;
+      _isButtonActive = _hasValidNickName && _hasValidEmail;
     });
   }
 
   @override
   void initState() {
+    final formData = ref.read(formDataProvider);
+    _nickNameController.text = formData['nickname'] ?? '';
+    _emailController.text = formData['email'] ?? '';
+    _nickNameController.addListener(() {
+      setState(() {
+        _hasValidNickName = _nickNameController.text.isNotEmpty;
+        _updateButtonState();
+      });
+    });
     _emailController.addListener(() {
       setState(() {
         _hasValidEmail = emailPattern.hasMatch(_emailController.text);
         _updateButtonState();
       });
     });
-    _passwordController.addListener(() {
-      setState(() {
-        _hasValidPassword = _passwordController.text.length >= 8;
-        _updateButtonState();
-      });
-    });
+
     super.initState();
   }
 
   @override
   void dispose() {
+    _nickNameController.dispose();
     _emailController.dispose();
-    _passwordController.dispose();
-
     super.dispose();
   }
 
@@ -95,16 +122,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           height: 16,
                         ),
                       SizedBox(
-                        height: screenSize.height > 700 ? 200 : 150,
+                        height: screenSize.height > 700 ? 210 : 150,
                         width: 400,
                         child: Stack(
                           children: [
                             Positioned(
-                              top: 43,
-                              right: 30,
+                              top: 10,
+                              right: 4,
                               child: Image.asset(
-                                "assets/images/login_papyrus.png",
-                                height: screenSize.height > 700 ? 154 : 110,
+                                "assets/images/signup.png",
+                                height: screenSize.height > 700 ? 220 : 160,
                               ),
                             ),
                             Positioned(
@@ -114,14 +141,14 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    '로그인',
+                                    '회원가입',
                                     style: Theme.of(context)
                                         .textTheme
                                         .headlineLarge,
                                   ),
                                   Gap(screenSize.height * 0.03),
                                   Text(
-                                    '나만의 역사를 기록하기 위해\n로그인 해주세요',
+                                    '회원가입 후 다양한 기기로\n이용할 수 있습니다',
                                     style: Theme.of(context)
                                         .textTheme
                                         .headlineSmall,
@@ -139,25 +166,25 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           child: Column(
                             children: [
                               LoginForm(
-                                text: "이메일",
+                                text: "별명 (자유롭게 변경 가능)",
+                                controller: _nickNameController,
+                                obscureText: false,
+                                keyboardType: TextInputType.name,
+                                onSaved: (newValue) {
+                                  if (newValue != null) {
+                                    formData['nickname'] = newValue;
+                                  }
+                                },
+                              ),
+                              Gaps.v8,
+                              LoginForm(
+                                text: "이메일 주소",
                                 controller: _emailController,
                                 obscureText: false,
                                 keyboardType: TextInputType.emailAddress,
                                 onSaved: (newValue) {
                                   if (newValue != null) {
                                     formData['email'] = newValue;
-                                  }
-                                },
-                              ),
-                              Gaps.v8,
-                              LoginForm(
-                                text: "패스워드",
-                                controller: _passwordController,
-                                obscureText: true,
-                                keyboardType: TextInputType.visiblePassword,
-                                onSaved: (newValue) {
-                                  if (newValue != null) {
-                                    formData['password'] = newValue;
                                   }
                                 },
                               ),
@@ -192,27 +219,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: paddingSize),
                         child: GestureDetector(
-                          onTap: () {},
-                          child: const AuthButton(
-                            text: "로그인",
-                            enabled: true,
-                            //_isButtonActive && !ref.watch(loginProvider).isLoading,
+                          onTap: _onNextTap,
+                          child: AuthButton(
+                            text: "다음",
+                            enabled: _isButtonActive &&
+                                !ref.watch(signupProvider).isLoading,
                           ),
                         ),
                       ),
                       Gap(screenSize.height * 0.03),
 
-                      GestureDetector(
-                        onTap: () {},
-                        child: const Text(
-                          "비밀번호를 잊으셨나요?",
-                          style: TextStyle(
-                            /// 로그인 폼 비밀번호 찾기 색상, 다크 테마 적용시 변경
-                            color: ModoraColors.mainDark,
-                            fontSize: 16,
-                            letterSpacing: -0.3,
-                            fontWeight: FontWeight.w700,
-                          ),
+                      const Text(
+                        "뒤로 돌아가기",
+                        style: TextStyle(
+                          /// 로그인 폼 비밀번호 찾기 색상, 다크 테마 적용시 변경
+                          color: Colors.transparent,
+                          fontSize: 16,
+                          letterSpacing: -0.3,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                       screenSize.height > 700
@@ -257,15 +281,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
-                          '계정이 없으신가요? ',
+                          '이미 계정이 있으시면? ',
                           style: TextStyle(
                             fontSize: 16,
                           ),
                         ),
                         GestureDetector(
-                          onTap: () => _goSignUpScreen(context),
+                          onTap: () => _goLoginScreen(context),
                           child: const Text(
-                            '회원가입',
+                            '로그인',
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
                               color: ModoraColors.mainDarker,
@@ -279,12 +303,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ],
               ),
               // 로딩 중이면 로딩 표시
-              // if (ref.watch(loginProvider).isLoading ||
-              //     ref.watch(googleLoginProvider).isLoading) ...[
-              //   const Center(
-              //     child: CircularProgressIndicator.adaptive(),
-              //   ),
-              // ],
+              //  || ref.watch(googleLoginProvider).isLoading 나중에 추가
+              if (ref.watch(signupProvider).isLoading) ...[
+                const Center(
+                  child: CircularProgressIndicator.adaptive(),
+                ),
+              ],
             ],
           ),
         ),

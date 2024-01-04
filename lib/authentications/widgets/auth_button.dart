@@ -20,7 +20,7 @@ class _AuthButtonState extends State<AuthButton> {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      height: 56,
+      height: 62,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: widget.enabled
