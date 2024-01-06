@@ -9,13 +9,13 @@ part 'signup_provider.g.dart';
 
 @riverpod
 class Signup extends _$Signup {
+  /// state 에러 방지를 위한 오브젝트 키
   Object? _key;
 
   @override
   FutureOr<void> build() {
     _key = Object();
     ref.onDispose(() {
-      print('[signupProvider] disposed');
       _key = null;
     });
   }

@@ -8,4 +8,9 @@ class RouteNames {
   static const splash = 'splash';
   static const firebaseError = 'firebaseError';
   static const history = 'history';
+  static const listpage = 'listpage';
+  static const calendar = 'calendar';
+  static const posts = 'posts';
+  static const write = 'write';
+  static const settings = 'settings';
 }

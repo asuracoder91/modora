@@ -53,7 +53,7 @@ class _SignUpConfirmScreenState extends ConsumerState<SignUpConfirmScreen> {
   /// 폼 제출
   void _submit({required String nickname, required String email}) {
     final form = _formKey.currentState;
-
+    if (!_isButtonActive) return;
     if (form == null || !form.validate()) return;
 
     ref.read(signupProvider.notifier).signup(
@@ -76,6 +76,11 @@ class _SignUpConfirmScreenState extends ConsumerState<SignUpConfirmScreen> {
             _passwordController.text.isEmpty ||
             _passwordController.text == "") {
           clientErrorMessage = "";
+        }
+        if (_hasValidPassword &&
+            _passwordCheckController.text.isNotEmpty &&
+            !_hasValidPasswordCheck) {
+          clientErrorMessage = "패스워드가 일치하지 않습니다";
         }
         _updateButtonState();
       });
@@ -121,15 +126,10 @@ class _SignUpConfirmScreenState extends ConsumerState<SignUpConfirmScreen> {
       signupProvider,
       (previous, next) {
         next.whenOrNull(
-          error: (e, st) => errorDialog(
-            context,
-            (e as CustomError),
-          ),
+          error: (e, st) => clientErrorMessage = e.toString(),
         );
       },
     );
-
-    final signupState = ref.watch(signupProvider);
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(), // 화면 터치하면 키보드 내려감

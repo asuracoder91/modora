@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:gap/gap.dart';
 import 'package:go_router/go_router.dart';
+import 'package:modora/authentications/repos/auth_repository_provider.dart';
 import 'package:modora/authentications/view_models/signup_provider.dart';
 
 import '../../core/constants/gaps.dart';
@@ -31,20 +32,41 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
   bool _hasValidEmail = false;
   bool _hasValidNickName = false;
   bool _isButtonActive = false;
-
+  bool _isEmailChecked = false;
   // Form 값을 저장하는 Map
   Map<String, String> formData = {};
+
+  final FocusNode _nickNameFocusNode = FocusNode();
+  final FocusNode _emailFocusNode = FocusNode();
 
   void _goLoginScreen(BuildContext context) {
     context.goNamed(RouteNames.login);
   }
 
-  /// TODO: 중복 아이디 체크 기능 구현 필요
-  void _onNextTap() {
+  void _clearErrorMessage() {
+    if (ref.read(signUpErrorMessageProvider) != null) {
+      ref.read(signUpErrorMessageProvider.notifier).state = null;
+    }
+    if (clientErrorMessage != "") {
+      clientErrorMessage = "";
+    }
+  }
+
+  void _onNextTap() async {
     if (_formKey.currentState != null) {
       if (_isButtonActive) {
         _formKey.currentState!.save();
 
+        // email 중복 체크
+        _isEmailChecked =
+            await ref.read(authRepositoryProvider).isEmailRegistered(
+                  _emailController.text,
+                );
+        if (_isEmailChecked) {
+          ref.read(signUpErrorMessageProvider.notifier).state =
+              "이미 가입된 이메일입니다.";
+          return;
+        }
         // Update the provider with the current form data
         ref.read(formDataProvider.notifier).state = {
           'nickname': _nickNameController.text,
@@ -73,6 +95,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     final formData = ref.read(formDataProvider);
     _nickNameController.text = formData['nickname'] ?? '';
     _emailController.text = formData['email'] ?? '';
+    _clearErrorMessage();
     _nickNameController.addListener(() {
       setState(() {
         _hasValidNickName = _nickNameController.text.isNotEmpty;
@@ -81,7 +104,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     });
     _emailController.addListener(() {
       setState(() {
-        clientErrorMessage = "";
+        _clearErrorMessage();
         _hasValidEmail = emailPattern.hasMatch(_emailController.text);
         if (!_hasValidEmail) {
           clientErrorMessage = "이메일 형식이 올바르지 않습니다.";
@@ -94,7 +117,8 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
         _updateButtonState();
       });
     });
-
+    _nickNameFocusNode.addListener(() => _clearErrorMessage());
+    _emailFocusNode.addListener(() => _clearErrorMessage());
     super.initState();
   }
 
@@ -177,6 +201,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                               LoginForm(
                                 text: "별명 (자유롭게 변경 가능)",
                                 controller: _nickNameController,
+                                focusNode: _nickNameFocusNode,
                                 obscureText: false,
                                 keyboardType: TextInputType.name,
                                 onSaved: (newValue) {
@@ -189,6 +214,7 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
                               LoginForm(
                                 text: "이메일 주소",
                                 controller: _emailController,
+                                focusNode: _emailFocusNode,
                                 obscureText: false,
                                 keyboardType: TextInputType.emailAddress,
                                 onSaved: (newValue) {

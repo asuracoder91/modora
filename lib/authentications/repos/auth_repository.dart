@@ -32,6 +32,19 @@ class AuthRepository {
     }
   }
 
+  /// email 중복 체크
+  Future<bool> isEmailRegistered(String email) async {
+    final querySnapshot = await usersCollection
+        .where('email', isEqualTo: email)
+        .limit(1)
+
+        /// 1개 발견시 바로 종료
+        .get();
+
+    /// 쿼리 결과가 비어있지 않다면(즉, 일치하는 문서가 있다면) true를 반환
+    return querySnapshot.docs.isNotEmpty;
+  }
+
   /// Login with Email and Password
   Future<void> login({
     required String email,
@@ -125,7 +138,6 @@ class AuthRepository {
         return await fbAuth.signInWithCredential(oauthCredentialWeb);
       }
     } catch (e) {
-      /// TODO: 에러 처리할 것
       print(e);
     }
 

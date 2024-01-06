@@ -10,35 +10,46 @@ class LoginForm extends StatefulWidget {
     required this.controller,
     required this.onSaved,
     required this.keyboardType,
+    this.focusNode,
   });
   final String text;
   final bool obscureText;
   final TextEditingController controller;
   final FormFieldSetter<String> onSaved;
   final TextInputType keyboardType;
+  final FocusNode? focusNode;
 
   @override
   State<LoginForm> createState() => _LoginFormState();
 }
 
 class _LoginFormState extends State<LoginForm> {
-  late FocusNode _focusNode;
+  late FocusNode _internalFocusNode;
   bool _isFocused = false;
+
+  FocusNode get _effectiveFocusNode => widget.focusNode ?? _internalFocusNode;
 
   @override
   void initState() {
     super.initState();
-    _focusNode = FocusNode();
-    _focusNode.addListener(() {
-      setState(() {
-        _isFocused = _focusNode.hasFocus;
-      });
+    _internalFocusNode = FocusNode();
+    _effectiveFocusNode.addListener(_handleFocusChange);
+  }
+
+  void _handleFocusChange() {
+    setState(() {
+      _isFocused = _effectiveFocusNode.hasFocus;
     });
   }
 
   @override
   void dispose() {
-    _focusNode.dispose();
+    _internalFocusNode.removeListener(_handleFocusChange);
+
+    if (widget.focusNode == null) {
+      _internalFocusNode.dispose();
+    }
+
     super.dispose();
   }
 
@@ -57,10 +68,11 @@ class _LoginFormState extends State<LoginForm> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: TextFormField(
-        focusNode: _focusNode,
+        focusNode: _effectiveFocusNode,
         controller: widget.controller,
         obscureText: widget.obscureText,
         keyboardType: widget.keyboardType,
+        textInputAction: TextInputAction.next,
         obscuringCharacter: '*',
         style: TextStyle(
           fontWeight: FontWeight.w500,

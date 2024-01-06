@@ -8,6 +8,7 @@ import 'package:modora/core/router/router_names.dart';
 import '../../core/constants/gaps.dart';
 import '../../core/constants/reg_expression.dart';
 import '../../core/core.dart';
+import '../view_models/login_provider.dart';
 import '../widgets/auth_button.dart';
 import '../widgets/login_form.dart';
 import '../widgets/social_login.dart';
@@ -26,6 +27,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
+  String clientErrorMessage = "";
   bool _hasValidEmail = false;
   bool _hasValidPassword = false;
   bool _isButtonActive = false;
@@ -44,17 +46,48 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
   }
 
+  // 로그인 버튼 눌렀을 때
+  void _login() {
+    final form = _formKey.currentState;
+
+    if (form == null || !form.validate()) return;
+    if (!_isButtonActive) return;
+    _formKey.currentState!.save();
+    ref.read(loginProvider.notifier).login(
+          email: formData["email"]!,
+          password: formData["password"]!,
+        );
+  }
+
   @override
   void initState() {
     _emailController.addListener(() {
       setState(() {
+        clientErrorMessage = "";
         _hasValidEmail = emailPattern.hasMatch(_emailController.text);
+        if (!_hasValidEmail) {
+          clientErrorMessage = "이메일 형식이 올바르지 않습니다.";
+        }
+        if (_hasValidEmail ||
+            _emailController.text.isEmpty ||
+            _emailController.text == "") {
+          clientErrorMessage = "";
+        }
         _updateButtonState();
       });
     });
     _passwordController.addListener(() {
       setState(() {
+        clientErrorMessage = "";
         _hasValidPassword = _passwordController.text.length >= 8;
+        if (!_hasValidPassword) {
+          clientErrorMessage = "패스워드를 8글자 이상 입력해주세요";
+        }
+        if (_hasValidPassword ||
+            _passwordController.text.isEmpty ||
+            _passwordController.text == "") {
+          clientErrorMessage = "";
+        }
         _updateButtonState();
       });
     });
@@ -74,8 +107,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final screenSize = MediaQuery.of(context).size;
     final paddingSize = screenSize.width >= 400 ? 30.0 : 25.0;
     // error message handling provider monitor
-    // final errorMessage = ref.watch(errorMessageProvider);
-    const errorMessage = null;
+    final errorMessage = ref.watch(loginErrorMessageProvider);
+    ref.listen<AsyncValue<void>>(
+      loginProvider,
+      (previous, next) {
+        next.whenOrNull(
+          error: (e, st) => clientErrorMessage = e.toString(),
+        );
+      },
+    );
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(), // 화면 터치하면 키보드 내려감
@@ -121,7 +161,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   ),
                                   Gap(screenSize.height * 0.03),
                                   Text(
-                                    '나만의 역사를 기록하기 위해\n로그인 해주세요',
+                                    '나의 역사를 기록하기 위해\n로그인 해주세요',
                                     style: Theme.of(context)
                                         .textTheme
                                         .headlineSmall,
@@ -163,16 +203,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               ),
                               Gaps.v6,
                               Visibility(
-                                visible: errorMessage != null &&
-                                    errorMessage.isNotEmpty,
+                                visible: (errorMessage != null &&
+                                        errorMessage.isNotEmpty) ||
+                                    (clientErrorMessage.isNotEmpty &&
+                                        clientErrorMessage != ""),
                                 maintainSize: true,
                                 maintainAnimation: true,
                                 maintainState: true,
-                                child: const SizedBox(
+                                child: SizedBox(
                                   height: 40,
                                   child: Text(
-                                    errorMessage ?? "",
-                                    style: TextStyle(
+                                    errorMessage ?? clientErrorMessage,
+                                    style: const TextStyle(
                                       color:
 
                                           /// 로그인 폼 에러 메시지 색상, 다크 테마 적용시 변경
@@ -192,11 +234,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Padding(
                         padding: EdgeInsets.symmetric(horizontal: paddingSize),
                         child: GestureDetector(
-                          onTap: () {},
-                          child: const AuthButton(
+                          onTap: () => _login(),
+                          child: AuthButton(
                             text: "로그인",
-                            enabled: true,
-                            //_isButtonActive && !ref.watch(loginProvider).isLoading,
+                            enabled: _isButtonActive &&
+                                !ref.watch(loginProvider).isLoading,
                           ),
                         ),
                       ),
@@ -205,7 +247,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       GestureDetector(
                         onTap: () {},
                         child: const Text(
-                          "비밀번호를 잊으셨나요?",
+                          "패스워드를 잊으셨나요?",
                           style: TextStyle(
                             /// 로그인 폼 비밀번호 찾기 색상, 다크 테마 적용시 변경
                             color: ModoraColors.mainDark,
@@ -279,12 +321,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ],
               ),
               // 로딩 중이면 로딩 표시
-              // if (ref.watch(loginProvider).isLoading ||
-              //     ref.watch(googleLoginProvider).isLoading) ...[
-              //   const Center(
-              //     child: CircularProgressIndicator.adaptive(),
-              //   ),
-              // ],
+              // || ref.watch(googleLoginProvider).isLoading 추가
+              if (ref.watch(loginProvider).isLoading) ...[
+                const Center(
+                  child: CircularProgressIndicator.adaptive(),
+                ),
+              ],
             ],
           ),
         ),

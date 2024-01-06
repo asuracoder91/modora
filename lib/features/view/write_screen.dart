@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:modora/core/core.dart';
 
-class History extends StatelessWidget {
-  const History({super.key});
+class WritePage extends StatelessWidget {
+  const WritePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -15,12 +15,12 @@ class History extends StatelessWidget {
             colors: [
               ModoraColors.mainColor,
               ModoraColors.mainBold,
-            ], // Replace with desired colors
+            ], 
           ),
         ),
         child: const Center(
           child: Text(
-            'History',
+            'Write',
             style: TextStyle(color: Colors.white, fontSize: 24),
           ),
         ),

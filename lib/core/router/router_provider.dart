@@ -1,15 +1,21 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:modora/authentications/views/firebase_error_screen.dart';
 import 'package:modora/authentications/views/login_screen.dart';
 import 'package:modora/authentications/views/signup_screen.dart';
 import 'package:modora/authentications/views/splash_screen.dart';
+import 'package:modora/features/view/calendar_screen.dart';
+import 'package:modora/features/view/history_screen.dart';
+import 'package:modora/features/view/posts_screen.dart';
+import 'package:modora/features/view/write_screen.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../authentications/repos/auth_repository_provider.dart';
 import '../../features/view/home_screen.dart';
-import '../constants/firebase_constants.dart';
+import '../../features/view/listpage_screen.dart';
+import '../../features/view/settings_screen.dart';
 import 'router_names.dart';
 
 part 'router_provider.g.dart';
@@ -51,7 +57,7 @@ GoRouter router(RouterRef ref) {
       final splashing = state.matchedLocation == '/splash';
 
       // return (authenticating || verifyingEmail || splashing) ? '/home' : null;
-      return (authenticating || splashing) ? '/home' : null;
+      return (authenticating || splashing) ? '/history' : null;
     },
     routes: [
       GoRoute(
@@ -82,13 +88,80 @@ GoRouter router(RouterRef ref) {
           return const SignUpScreen();
         },
       ),
-      GoRoute(
-        path: '/home',
-        name: RouteNames.home,
-        builder: (context, state) {
-          return const HomeScreen();
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) {
+          return HomeScreen(navigationShell: navigationShell);
         },
+        branches: [
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/history',
+                name: RouteNames.history,
+                builder: (context, state) {
+                  return const History();
+                },
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/listpage',
+                name: RouteNames.listpage,
+                builder: (context, state) {
+                  return const ListPage();
+                },
+                routes: [
+                  GoRoute(
+                    path: 'posts/:id',
+                    name: RouteNames.posts,
+                    builder: (context, state) {
+                      final id = state.pathParameters['id']!;
+
+                      return PostsPage(
+                        id: id,
+                      );
+                    },
+                  ),
+                  GoRoute(
+                    parentNavigatorKey: _rootNavigatorKey,
+                    path: 'write',
+                    name: RouteNames.write,
+                    builder: (context, state) {
+                      return const WritePage();
+                    },
+                  ),
+                ],
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/calendar',
+                name: RouteNames.calendar,
+                builder: (context, state) {
+                  return const Calendar();
+                },
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/settings',
+                name: RouteNames.settings,
+                builder: (context, state) {
+                  return const Settings();
+                },
+              ),
+            ],
+          ),
+        ],
       ),
     ],
   );
 }
+
+final selectedIndexProvider = StateProvider<int>((ref) => 0);

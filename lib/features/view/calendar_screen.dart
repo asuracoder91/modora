@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:modora/core/core.dart';
 
-class History extends StatelessWidget {
-  const History({super.key});
+class Calendar extends StatelessWidget {
+  const Calendar({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -20,7 +20,7 @@ class History extends StatelessWidget {
         ),
         child: const Center(
           child: Text(
-            'History',
+            'Calendar',
             style: TextStyle(color: Colors.white, fontSize: 24),
           ),
         ),
